@@ -1,7 +1,7 @@
 {
-    "START_HOUR" : "7",
-    "FINISH_HOUR" : "20",
-    "INTERVAL" : 15,
-    "photo_local_root" : "/home/pi/Desktop/images",
-	"FILE_TYPE" : "RAW"
+    "FILE_TYPE":"RAW",
+    "FINISH_HOUR":"17",
+    "INTERVAL":15,
+    "START_HOUR":"7",
+    "photo_local_root":"/home/pi/Desktop/images"
 }
