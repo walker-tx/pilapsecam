@@ -44,28 +44,6 @@ def killGphoto():
     print('***')
 
 #
-# Import Config Variables from the JSON FilTYPE (Maybe move to init method?)
-#
-# def loadConfig():
-
-    # global START_HOUR, FINISH_HOUR, HOUR_BOUNDS, INTERVAL, FILE_TYPE, photo_local_root
-
-    # config_file = open('PLC_config', 'r')
-    # config_variables = json.load(config_file)
-    # config_file.close()
-    # START_HOUR = config_variables['START_HOUR']
-    # FINISH_HOUR = config_variables['FINISH_HOUR']
-    # INTERVAL = config_variables['INTERVAL']
-    # photo_local_root = config_variables['photo_local_root']
-    # FILE_TYPE = config_variables['FILE_TYPE']
-    
-    # HOUR_BOUNDS = tl.getConfig('START_HOUR') + '-' + tl.getConfig('FINISH_HOUR')
-    
-    # print('CONFIGURATION LOADED...')
-    # print('START HOUR :', START_HOUR, '| FINISH HOUR :', FINISH_HOUR, '| INTERVAL :', INTERVAL)
-    # print('PHOTO DIRECTORY :', photo_local_root, '| IMAGE TYPE :', FILE_TYPE)
-
-#
 # Convert the exifread object to a readable date and time
 #
 def EXIF_DateTimetoStr(exifread):
