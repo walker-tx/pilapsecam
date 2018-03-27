@@ -27,22 +27,10 @@ import json
 import gphoto2 as gp
 import exifread
 from apscheduler.schedulers.background import BlockingScheduler
-
-# Class Variables
-##Photo save root folder on local device
-photo_local_root = None
-
-##Variable Initialization
-START_HOUR = None
-FINISH_HOUR = None
-INTERVAL = 15 #Seconds
-FILE_TYPE = None
-HOUR_BOUNDS = None
+from timelapse import timelapse
 
 ##Calculated. Don't touch these!
-logging.basicConfig(filename='test.log', level=logging.WARNING, \
-                    format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
-SCHEDULER = BlockingScheduler(timezone='US/Central')
+tl = timelapse()
                     
 #
 # Kill the 'gvfsd-gphoto2' process
@@ -58,24 +46,24 @@ def killGphoto():
 #
 # Import Config Variables from the JSON FilTYPE (Maybe move to init method?)
 #
-def loadConfig():
+# def loadConfig():
 
-    global START_HOUR, FINISH_HOUR, HOUR_BOUNDS, INTERVAL, FILE_TYPE, photo_local_root
+    # global START_HOUR, FINISH_HOUR, HOUR_BOUNDS, INTERVAL, FILE_TYPE, photo_local_root
 
-    config_file = open('PLC_config', 'r')
-    config_variables = json.load(config_file)
-    config_file.close()
-    START_HOUR = config_variables['START_HOUR']
-    FINISH_HOUR = config_variables['FINISH_HOUR']
-    INTERVAL = config_variables['INTERVAL']
-    photo_local_root = config_variables['photo_local_root']
-    FILE_TYPE = config_variables['FILE_TYPE']
+    # config_file = open('PLC_config', 'r')
+    # config_variables = json.load(config_file)
+    # config_file.close()
+    # START_HOUR = config_variables['START_HOUR']
+    # FINISH_HOUR = config_variables['FINISH_HOUR']
+    # INTERVAL = config_variables['INTERVAL']
+    # photo_local_root = config_variables['photo_local_root']
+    # FILE_TYPE = config_variables['FILE_TYPE']
     
-    HOUR_BOUNDS = START_HOUR + '-' + FINISH_HOUR
+    # HOUR_BOUNDS = tl.getConfig('START_HOUR') + '-' + tl.getConfig('FINISH_HOUR')
     
-    print('CONFIGURATION LOADED...')
-    print('START HOUR :', START_HOUR, '| FINISH HOUR :', FINISH_HOUR, '| INTERVAL :', INTERVAL)
-    print('PHOTO DIRECTORY :', photo_local_root, '| IMAGE TYPE :', FILE_TYPE)
+    # print('CONFIGURATION LOADED...')
+    # print('START HOUR :', START_HOUR, '| FINISH HOUR :', FINISH_HOUR, '| INTERVAL :', INTERVAL)
+    # print('PHOTO DIRECTORY :', photo_local_root, '| IMAGE TYPE :', FILE_TYPE)
 
 #
 # Convert the exifread object to a readable date and time
@@ -115,17 +103,17 @@ def captureSave(camera, context):
         camera, gp.GP_CAPTURE_IMAGE, context))
 
     #Making Target Save photo_local_root Dir
-    target = os.path.join(photo_local_root, file_path.name)
+    target = os.path.join(tl.getConfig('photo_local_root'), file_path.name)
     
     #Grab Captured Image Extension
     file_ext = pathlib.Path(file_path.name).suffix
     
     #GP_FILE_TYPE_NORMAL for JPEG; GP_FILE_TYPE_RAW for RAW
-    if (FILE_TYPE == 'RAW'):
+    if (tl.getConfig('FILE_TYPE') == 'RAW'):
         camera_file = gp.check_result(gp.gp_camera_file_get(
                 camera, file_path.folder, file_path.name,
                 gp.GP_FILE_TYPE_RAW, context))
-    elif (FILE_TYPE == 'JPEG'):
+    elif (tl.getConfig('FILE_TYPE') == 'JPEG'):
         camera_file = gp.check_result(gp.gp_camera_file_get(
                 camera, file_path.folder, file_path.name,
                 gp.GP_FILE_TYPE_NORMAL, context))
@@ -143,7 +131,7 @@ def captureSave(camera, context):
 	#Change file extension here for RAW/JPEG
         if tag in ('EXIF DateTimeOriginal'):
             file_name = EXIF_DateTimetoStr(tags[tag]) + file_ext
-            file_dir = os.path.join(photo_local_root, 
+            file_dir = os.path.join(tl.getConfig('photo_local_root'), 
                                     EXIF_DatetoStr(tags[tag]))
 
             #Check existence of file_dir, the create it if false
@@ -158,15 +146,22 @@ def captureSave(camera, context):
 # Main Function
 #
 def main():
+
+    logging.basicConfig(filename='test.log', level=logging.WARNING, \
+                    format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
+
     #Kill gphoto2
     killGphoto()
     
-    #Load Configuration from PLC_Config
-    loadConfig()
+    
+    #Declaring/Calculating variables needed
+    SCHEDULER = BlockingScheduler(timezone='US/Central')
+    HOUR_BOUNDS = tl.getConfig('START_HOUR') + '-' + tl.getConfig('FINISH_HOUR')
+    
     
     #Ensure photo_local_root exists
-    if not os.path.exists(photo_local_root):
-        os.makedirs(photo_local_root)
+    if not os.path.exists(tl.getConfig('photo_local_root')):
+        os.makedirs(tl.getConfig('photo_local_root'))
 
     #GP2 Log and Camera Setup
     gp.check_result(gp.use_python_logging())
@@ -174,9 +169,9 @@ def main():
     camera = gp.check_result(gp.gp_camera_new())
     gp.check_result(gp.gp_camera_init(camera, context))
 
-    #Declaration of Interval Schedulers
+    #Adding job to scheduler
     SCHEDULER.add_job(captureSave, 'cron', args=[camera,context], \
-                      day_of_week='mon-fri', second='*/'+str(INTERVAL), \
+                      day_of_week='mon-fri', second='*/'+str(tl.getConfig('INTERVAL')), \
                       hour=HOUR_BOUNDS)
     print('Press Ctrl+{0} to exit'.format( \
           'Break' if os.name == 'nt' else 'C'))
@@ -193,5 +188,4 @@ def main():
     return 0
 
 if __name__ == "__main__":
-    print('***PROCESS CLOSING***')
     sys.exit(main())

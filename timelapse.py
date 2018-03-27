@@ -1,28 +1,20 @@
 import json
+import logging
 
 class timelapse:
             
-    def getConfig(self, setting=None):
+    def getConfig(self, setting=None): 
         
-        try:
-            config_file = open('PLC_config', 'r')
-            self.config_dict = json.load(config_file)
-            
-            if setting is None:
-                return self.config_dict
-            else:
-                try:
-                    x = self.config_dict[setting]
-                    return x
-                except KeyError as error:
-                    print("ERROR: ", error, "is not an acceptable setting.")
-                    
-        except OSError as error:
-            print("ERROR OPENING PLC_config\n", error, "\nConsider running setDefaultConfig()")
-        
-        
-        
-        
+        if setting is None:
+            return self.config_dict
+        else:
+            try:
+                x = self.config_dict[setting]
+                return x
+            except:
+                logging.getLogger().warning('Problem accessing setting \"' + setting + '\". Key likely does not exist.')
+
+    
     def setDefaultConfig(self):
         config_file = open('PLC_config', 'w+')
         default_config_dict = {'photo_local_root': '/home/pi/Desktop/images', 
@@ -31,19 +23,19 @@ class timelapse:
         
         json.dump(default_config_dict, config_file, indent=4, sort_keys=True, separators=(',', ':'))
         config_file.close()
+        logging.getLogger().warning("PLC_config has been reset.")
         
         
-    def printConfig(self):
-        print('Config : ')
-        print(self.config_dict)
-        
-        
-    def __init__(self):
-        config_file = open('PLC_config', 'w+')
-    
+    def loadConfig(self):
         try:
+            config_file = open('PLC_config', 'r')
             self.config_dict = json.load(config_file)
             config_file.close()
         except:
+            logging.getLogger().warning("Problem accessing the configuration data. Either PLC_config does not exist, or the file has no JSON data in it... Resetting PLC_config to default")
             config_file.close()
             self.setDefaultConfig()
+        
+        
+    def __init__(self):
+        self.loadConfig()
