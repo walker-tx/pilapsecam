@@ -1,6 +1,6 @@
 {
     "FILE_TYPE":"JPEG",
-    "FINISH_HOUR":"20",
+    "FINISH_HOUR":"23",
     "INTERVAL":15,
     "START_HOUR":"7",
     "photo_local_root":"/home/pi/images"
